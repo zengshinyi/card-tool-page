@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>刷卡費率試算工具</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a73e8">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="刷卡試算">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<style>
+body{
+    font-family: "Microsoft JhengHei", sans-serif;
+    margin:0;
+    padding:16px;
+    background:#f0f2f5;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+    background:#fff;
+    padding:16px;
+    border-radius:12px;
+}
+
+h2{
+    text-align:center;
+    color:#1a73e8;
+}
+
+.input-area{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    background:#f8f9fa;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.input-box{
+    display:flex;
+    flex-direction:column;
+}
+
+input{
+    padding:10px;
+    font-size:16px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    width:140px;
+}
+
+.table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table{
+    border-collapse:collapse;
+    min-width:900px;
+    width:max-content;
+}
+
+th,td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+    font-size:13px;
+}
+
+th{
+    background:#1a73e8;
+    color:white;
+}
+
+.bank{
+    background:#fff9e6;
+    font-weight:bold;
+}
+
+.fee{color:#d93025;font-size:12px;}
+.profit{color:#188038;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<script>
+/* 🔐 簡易密碼保護 */
+const PASSWORD = "123450924"; // ← 改這裡
+
+const input = prompt("請輸入使用密碼");
+
+if (input !== PASSWORD) {
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:80px;color:red;'>🚫 無權限存取</h2>";
+    throw new Error("Unauthorized");
+}
+</script>
+
+<div class="container">
+
+<h2>💳 刷卡費率試算 PWA</h2>
+
+<div class="input-area">
+    <div class="input-box">
+        <label>交易金額</label>
+        <input type="number" id="amt" oninput="calc()">
+    </div>
+
+    <div class="input-box">
+        <label>未稅成本</label>
+        <input type="number" id="cost" oninput="calc()">
+    </div>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>銀行</th>
+<th>國內</th>
+<th>國外</th>
+<th>3期</th>
+<th>6期</th>
+</tr>
+</thead>
+
+<tbody id="tb"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+const data = [
+{n:"台新", d:1.75, f:2.8, p3:1.8, p6:3.0},
+{n:"國泰", d:1.65, f:1.65, p3:2.0, p6:2.5},
+{n:"中信", d:1.8, f:null, p3:2.25, p6:3.5},
+{n:"玉山", d:1.8, f:null, p3:null, p6:3.5},
+{n:"富邦", d:1.8, f:null, p3:2.0, p6:3.0}
+];
+
+function calc(){
+let amt = +document.getElementById("amt").value || 0;
+let cost = (+document.getElementById("cost").value || 0) * 1.05;
+
+let tb = document.getElementById("tb");
+tb.innerHTML = "";
+
+data.forEach(x=>{
+let tr = document.createElement("tr");
+
+tr.innerHTML = `
+<td class="bank">${x.n}</td>
+<td>${cell(amt,cost,x.d)}</td>
+<td>${cell(amt,cost,x.f)}</td>
+<td>${cell(amt,cost,x.p3)}</td>
+<td>${cell(amt,cost,x.p6)}</td>
+`;
+
+tb.appendChild(tr);
+});
+}
+
+function cell(a,c,r){
+if(!r) return "-";
+let fee = Math.round(a * r / 100);
+let profit = a - c - fee;
+
+return `
+<div class="fee">$${fee}</div>
+<div class="profit">$${profit}</div>
+`;
+}
+
+calc();
+
+/* PWA service worker */
+if ("serviceWorker" in navigator) {
+navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
